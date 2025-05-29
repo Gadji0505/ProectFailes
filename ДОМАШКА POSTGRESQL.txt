@@ -1,0 +1,280 @@
+CREATE TABLE PublicationTypes (
+  publication_type_id SERIAL PRIMARY KEY,
+  type_name VARCHAR(50) NOT NULL UNIQUE
+  );
+  
+  CREATE TABLE Publishers (
+  publisher_id SERIAL PRIMARY KEY,
+  publisher_name VARCHAR(100) NOT NULL,
+  address VARCHAR(255),
+  phone VARCHAR(20)
+  );
+  
+  CREATE TABLE Topics (
+  topic_id SERIAL PRIMARY KEY,
+  topic_name VARCHAR(100) NOT NULL UNIQUE
+  );
+  
+  CREATE TABLE StorageLocations (
+  storage_location_id SERIAL PRIMARY KEY,
+  location_name VARCHAR(100) NOT NULL UNIQUE,
+  description TEXT
+  );
+  
+  CREATE TABLE Books (
+  book_id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  publication_type_id INT REFERENCES PublicationTypes(publication_type_id),
+  publisher_id INT REFERENCES Publishers(publisher_id),
+  storage_location_id INT REFERENCES StorageLocations(storage_location_id),
+  publication_year INT CHECK (publication_year > 0),
+  ISBN VARCHAR(20) UNIQUE
+  );
+  
+  CREATE TABLE Subscribers (
+  subscriber_id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  membership_date DATE NOT NULL,
+  email VARCHAR(100) UNIQUE
+  );
+  
+  CREATE TABLE Librarians (
+  librarian_id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  employment_date DATE NOT NULL,
+  email VARCHAR(100) UNIQUE
+  );
+  
+  CREATE TABLE Loans (
+  loan_id SERIAL PRIMARY KEY,
+  book_id INT REFERENCES Books(book_id),
+  subscriber_id INT REFERENCES Subscribers(subscriber_id),
+  librarian_id INT REFERENCES Librarians(librarian_id),
+  loan_date DATE NOT NULL,
+  return_date DATE
+  );
+  
+  CREATE TABLE BookAuthors (
+      book_author_id SERIAL PRIMARY KEY,
+      book_id INT REFERENCES Books(book_id),
+      author_name VARCHAR(100) NOT NULL
+  );
+  
+  INSERT INTO PublicationTypes (type_name) VALUES
+  ('Книга'),
+  ('Журнал'),
+  ('Газета'),
+  ('Диссертация'),
+  ('Материалы конференции');
+  
+  INSERT INTO Publishers (publisher_name, address, phone) VALUES
+  ('Питер', 'Санкт-Петербург, Россия', '+78121234567'),
+  ('Эксмо', 'Москва, Россия', '+74957654321'),
+  ('АСТ', 'Москва, Россия', '+74951112233'),
+  ('Лань', 'СПб, ул. Пушкина, д. 10', '+78129876543'),
+  ('Бином', 'Казань, Россия', '+78431234567');
+  
+  INSERT INTO Topics (topic_name) VALUES
+  ('Информатика'),
+  ('Математика'),
+  ('Физика'),
+  ('Литература'),
+  ('Биология'),
+  ('Экономика'),
+  ('История');
+  
+  INSERT INTO StorageLocations (location_name, description) VALUES
+  ('Читальный зал', 'Основное помещение на первом этаже'),
+  ('Архив', 'Второй этаж, вспомогательное хранилище'),
+  ('Цифровая библиотека', 'Электронные издания'),
+  ('Редкие книги', 'Закрытый фонд с ценными изданиями'),
+  ('Детский отдел', 'Для детей дошкольного и школьного возраста');
+  
+  INSERT INTO Books (title, publication_type_id, publisher_id, storage_location_id, publication_year, ISBN) VALUES
+  ('Введение в программирование', 1, 1, 1, 2020, '978-5-4461-0123-4'),
+  ('Физика квантовых частиц', 1, 3, 1, 2019, '978-5-9901234-5-6'),
+  ('Высшая математика для студентов', 1, 5, 2, 2021, '978-5-88825-123-4'),
+  ('Наука и жизнь', 2, 2, 3, 2022, '978-5-11122-333-4'),
+  ('Краткая история времени', 1, 4, 1, 2018, '978-5-444-55566-7'),
+  ('Мир физики', 3, 3, 2, 2023, '978-5-123-45678-9'),
+  ('Искусство программирования', 1, 2, 1, 2021, '978-5-999-88877-6');
+  
+  INSERT INTO Subscribers (name, membership_date, email) VALUES
+  ('Иван Петров', '2022-01-15', 'ivan@example.com'),
+  ('Мария Смирнова', '2021-05-20', 'maria@example.com'),
+  ('Алексей Новиков', '2023-03-10', 'alexey@example.com'),
+  ('Екатерина Иванова', '2020-11-01', 'ekaterina@example.com'),
+  ('Дмитрий Козлов', '2022-09-05', 'dmitry@example.com');
+  
+  INSERT INTO Librarians (name, employment_date, email) VALUES
+  ('Ольга Сергеева', '2019-06-01', 'olga@lib.ru'),
+  ('Николай Андреев', '2020-08-12', 'nikolay@lib.ru'),
+
+('Анастасия Васильева', '2021-04-23', 'anastasia@lib.ru'),
+  ('Владимир Петров', '2022-02-10', 'vladimir@lib.ru');
+  
+  INSERT INTO Loans (book_id, subscriber_id, librarian_id, loan_date, return_date) VALUES
+  (1, 1, 1, '2024-03-01', '2024-03-20'),
+  (2, 2, 2, '2024-03-05', NULL), -- ещё не возвращено
+  (3, 3, 1, '2024-03-10', '2024-03-25'),
+  (4, 4, 3, '2024-03-12', '2024-03-28'),
+  (5, 5, 4, '2024-03-15', NULL); -- ещё не возвращено
+  
+  INSERT INTO BookAuthors
+
+  (book_id, author_name) VALUES
+  (1, 'Иван Иванов'),
+  (2, 'Петр Петров'),
+  (3, 'Александр Смирнов'),
+  (4, 'Мария Кузнецова'),
+  (5, 'Ольга Орлова'),
+  (6, 'Дмитрий Дмитриев'),
+  (7, 'Сергей Лебедев'),
+  (1, 'Анна Новикова'), -- у книги может быть несколько авторов
+  (3, 'Екатерина Васильева'),
+  (5, 'Александр Смирнов');
+
+
+
+
+
+
+
+
+
+
+1
+--------------------------------------------
+SELECT 
+    b.title,
+    COUNT(l.loan_id) AS total_loans,
+    ROUND(AVG(l.return_date - l.loan_date), 2) AS avg_loan_days
+FROM Books b
+LEFT JOIN Loans l ON b.book_id = l.book_id AND l.return_date IS NOT NULL
+GROUP BY b.book_id, b.title;
+--------------------------------------------
+2
+--------------------------------------------
+SELECT 
+    s.subscriber_id,
+    s.name
+FROM 
+    Subscribers s
+WHERE 
+    s.subscriber_id NOT IN (
+        SELECT DISTINCT l.subscriber_id
+        FROM Loans l
+        WHERE l.loan_date >= CURRENT_DATE - INTERVAL '6 months'
+    );
+--------------------------------------------
+3
+--------------------------------------------
+SELECT 
+    ba.author_name, 
+    COUNT(ba.book_id) AS total_books
+FROM 
+    BookAuthors ba
+JOIN Books b ON ba.book_id = b.book_id
+GROUP BY 
+    ba.author_name
+ORDER BY 
+    total_books DESC;
+--------------------------------------------
+4
+--------------------------------------------
+SELECT 
+    ba.author_name, 
+    COUNT(ba.book_id) AS total_books
+FROM 
+    BookAuthors ba
+JOIN Books b ON ba.book_id = b.book_id
+GROUP BY 
+    ba.author_name
+ORDER BY 
+    total_books DESC;
+--------------------------------------------
+5
+--------------------------------------------
+SELECT 
+    b.book_id,
+    b.title,
+    COUNT(l.loan_id) AS total_loans
+FROM Books b
+JOIN Loans l ON b.book_id = l.book_id
+WHERE l.loan_date <= CURRENT_DATE - INTERVAL '1 year'
+GROUP BY b.book_id, b.title
+ORDER BY total_loans DESC
+LIMIT 3;
+--------------------------------------------
+6
+--------------------------------------------
+SELECT DISTINCT s.subscriber_id, s.name
+FROM Subscribers s
+JOIN Loans l ON s.subscriber_id = l.subscriber_id
+JOIN Books b ON l.book_id = b.book_id
+WHERE b.publisher_id = 1
+  AND l.loan_date <= CURRENT_DATE - INTERVAL '1 year'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM Loans l2
+    JOIN Books b2 ON l2.book_id = b2.book_id
+    WHERE l2.subscriber_id = s.subscriber_id
+      AND b2.publisher_id <> 1
+  );
+--------------------------------------------
+7
+--------------------------------------------
+SELECT * FROM 
+(SELECT 
+    ba.author_name,
+    COUNT(l.loan_id) AS total_loans
+FROM BookAuthors ba
+LEFT JOIN Books b ON ba.book_id = b.book_id
+LEFT JOIN Loans l ON b.book_id = l.book_id
+WHERE l.loan_date <= CURRENT_DATE - INTERVAL '1 year'
+GROUP BY ba.author_name) AS subquery
+WHERE 
+    total_loans <= 3;
+--------------------------------------------
+8
+--------------------------------------------
+SELECT * FROM 
+(SELECT 
+    ba.author_name,
+    COUNT(l.loan_id) AS total_loans
+FROM BookAuthors ba
+LEFT JOIN Books b ON ba.book_id = b.book_id
+LEFT JOIN Loans l ON b.book_id = l.book_id
+WHERE l.loan_date <= CURRENT_DATE - INTERVAL '1 year'
+GROUP BY ba.author_name) AS subquery
+WHERE 
+    total_loans <= 3;
+--------------------------------------------
+9
+--------------------------------------------
+SELECT * FROM 
+(SELECT 
+    ba.author_name,
+    COUNT(l.loan_id) AS total_loans
+FROM BookAuthors ba
+LEFT JOIN Books b ON ba.book_id = b.book_id
+LEFT JOIN Loans l ON b.book_id = l.book_id
+WHERE l.loan_date <= CURRENT_DATE - INTERVAL '1 year'
+GROUP BY ba.author_name) AS subquery
+WHERE 
+    total_loans <= 3;
+--------------------------------------------
+10
+--------------------------------------------
+SELECT * FROM 
+(SELECT 
+    ba.author_name,
+    COUNT(l.loan_id) AS total_loans
+FROM BookAuthors ba
+LEFT JOIN Books b ON ba.book_id = b.book_id
+LEFT JOIN Loans l ON b.book_id = l.book_id
+WHERE l.loan_date <= CURRENT_DATE - INTERVAL '1 year'
+GROUP BY ba.author_name) AS subquery
+WHERE 
+    total_loans <= 3;
+--------------------------------------------
