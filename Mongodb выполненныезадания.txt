@@ -1,0 +1,372 @@
+1
+db.Pazhient.aggregate([
+  {
+    $lookup: {
+      from: "Bolezn",
+      localField: "Bolezns",
+      foreignField: "_id",
+      as: "disease_info"
+    }
+  },
+  {
+    $project: {
+      name: 1,
+      age: 1,
+      diseases: "$disease_info.name"
+    }
+  },
+  { $sort: { age: -1 } }
+])
+2
+db.Pazhient.aggregate([
+  { $unwind: "$Bolezns" },
+  {
+    $group: {
+      _id: "$Bolezns",
+      count: { $sum: 1 }
+    }
+  },
+  {
+    $lookup: {
+      from: "Bolezn",
+      localField: "_id",
+      foreignField: "_id",
+      as: "disease_info"
+    }
+  },
+  { $unwind: "$disease_info" },
+  {
+    $project: {
+      disease_name: "$disease_info.name",
+      patient_count: "$count",
+      _id: 0
+    }
+  }
+])
+3
+const fluId = db.Bolezn.findOne({ name: "Грипп" })._id;
+db.Pazhient.find(
+  { Bolezns: fluId },
+  { name: 1, age: 1, _id: 0 }
+).sort({ age: 1 })
+4
+db.Naznachenie.aggregate([
+  {
+    $group: {
+      _id: "$medication",
+      count: { $sum: 1 }
+    }
+  }
+])
+5
+db.Doctor.aggregate([
+  {
+    $group: {
+      _id: "$specialty",
+      maxExperience: { $max: "$experience" },
+      doctors: { $push: "$$ROOT" }
+    }
+  },
+  {
+    $project: {
+      doctors: {
+        $filter: {
+          input: "$doctors",
+          as: "doctor",
+          cond: { $eq: ["$$doctor.experience", "$maxExperience"] }
+        }
+      }
+    }
+  },
+  { $unwind: "$doctors" },
+  {
+    $project: {
+      specialty: "$_id",
+      name: "$doctors.name",
+      experience: "$doctors.experience",
+      _id: 0
+    }
+  }
+])
+6
+db.Pazhient.aggregate([
+  { $unwind: "$Bolezns" },
+  {
+    $group: {
+      _id: "$Bolezns",
+      avgAge: { $avg: "$age" }
+    }
+  },
+  {
+    $lookup: {
+      from: "Bolezn",
+      localField: "_id",
+      foreignField: "_id",
+      as: "disease_info"
+    }
+  },
+  { $unwind: "$disease_info" },
+  {
+    $project: {
+      disease_name: "$disease_info.name",
+      average_age: { $round: ["$avgAge", 1] },
+      _id: 0
+    }
+  }
+])
+7
+db.Pazhient.aggregate([
+  { $unwind: "$Bolezns" },
+  {
+    $group: {
+      _id: "$Bolezns",
+      count: { $sum: 1 }
+    }
+  },
+  { $sort: { count: -1 } },
+  { $limit: 1 },
+  {
+    $lookup: {
+      from: "Bolezn",
+      localField: "_id",
+      foreignField: "_id",
+      as: "disease_info"
+    }
+  },
+  { $unwind: "$disease_info" },
+  {
+    $project: {
+      disease_name: "$disease_info.name",
+      patient_count: "$count",
+      _id: 0
+    }
+  }
+])
+8
+db.Naznachenie.aggregate([
+  {
+    $lookup: {
+      from: "Pazhient",
+      localField: "person",
+      foreignField: "_id",
+      as: "patient"
+    }
+  },
+  { $unwind: "$patient" },
+  {
+    $group: {
+      _id: "$patient.Doctor",
+      diseaseCount: { $sum: { $size: "$patient.Bolezns" } }
+    }
+  },
+  { $match: { diseaseCount: { $gt: 2 } } },
+  {
+    $lookup: {
+      from: "Doctor",
+      localField: "_id",
+      foreignField: "_id",
+      as: "doctor_info"
+    }
+  },
+  { $unwind: "$doctor_info" },
+  {
+    $project: {
+      specialty: "$doctor_info.specialty",
+      _id: 0
+    }
+  }
+])
+9
+db.Pazhient.aggregate([
+  {
+    $lookup: {
+      from: "Bolezn",
+      localField: "Bolezns",
+      foreignField: "_id",
+      as: "diseases_info"
+    }
+  },
+  {
+    $match: {
+      "diseases_info.severity": "Высокая"
+    }
+  },
+  {
+    $project: {
+      name: 1,
+      _id: 0
+    }
+  }
+])
+10
+db.Doctor.find({
+  _id: {
+    $in: db.Pazhient.aggregate([
+      {
+        $lookup: {
+          from: "Bolezn",
+          localField: "Bolezns",
+          foreignField: "_id",
+          as: "diseases_info"
+        }
+      },
+      {
+        $match: {
+          "diseases_info.severity": "Высокая"
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          doctorIds: { $addToSet: "$Doctor" }
+        }
+      }
+    ]).next().doctorIds
+  }
+})
+11
+db.Naznachenie.aggregate([
+  {
+    $lookup: {
+      from: "Pazhient",
+      localField: "person",
+      foreignField: "_id",
+      as: "patient_info"
+    }
+  },
+  { $unwind: "$patient_info" },
+  {
+    $project: {
+      patient_name: "$patient_info.name",
+      medication: 1,
+      dosage: 1,
+      _id: 0
+    }
+  },
+  { $sort: { patient_name: 1 } }
+])
+﻿1 Вывести имена пациентов и названия болезней, которыми они болеют, отсортированные по возрасту пациентов в порядке убывания.
+﻿﻿2 Вывести названия болезней и количество пациентов,
+страдающих каждой болезнью.
+﻿﻿3 Вывести имена и возраст всех пациентов с диагнозом "Грипп", отсортированных по возрасту.
+﻿﻿4 Подсчитать количество назначений каждого лекарства.
+﻿﻿5 Найти врачей с максимальным опытом работы в каждой специальности.
+﻿﻿6 Найти средний возраст пациентов, страдающих каждой болезнью.
+﻿﻿7 Найти болезни, которыми страдает больше всего людей.
+﻿﻿8 Вывести специальности врачей, которые лечат более двух болезней (через назначения).
+﻿﻿9 Найти пациентов, у которых есть хотя бы одна болезнь с тяжестью "Высокая".
+10.
+Найти всех врачей, которые выписывали лекарства для
+болезней с тяжестью "Высокая".
+11. Вывести имена пациентов и дозировку лекарств, которые им назначены, отсортированные по имени пациента.
+
+
+
+
+
+
+1. Топ 2 заболеваний по распространенности
+2. Найти пациентов старше 30 лет с указанными заболеваниями (отсортировать по возрасту, вывести первых 2)
+3. Количество врачей в возрастных группах по специальности
+4. Количество рецептов по специальностям врачей
+1)db.Pazhient.aggregate([
+  { $unwind: "$Bolezns" },
+  { 
+    $group: { 
+      _id: "$Bolezns", 
+      count: { $sum: 1 } 
+    } 
+  },
+  { 
+    $lookup: { 
+      from: "Bolezn", 
+      localField: "_id", 
+      foreignField: "_id", 
+      as: "disease_info" 
+    } 
+  },
+  { $unwind: "$disease_info" },
+  { 
+    $project: { 
+      disease_name: "$disease_info.name", 
+      count: 1, 
+      _id: 0 
+    } 
+  },
+  { $sort: { count: -1 } },
+  { $limit: 2 }
+])
+2)db.Pazhient.aggregate([
+  { 
+    $match: { 
+      age: { $gt: 30 },
+      Bolezns: { 
+        $in: [
+          db.Bolezn.findOne({ name: "Гипертония" })._id,
+          db.Bolezn.findOne({ name: "Диабет" })._id
+        ] 
+      } 
+    } 
+  },
+  { 
+    $lookup: { 
+      from: "Bolezn", 
+      localField: "Bolezns", 
+      foreignField: "_id", 
+      as: "disease_data" 
+    } 
+  },
+  { $sort: { age: 1 } },
+  { $limit: 2 },
+  { 
+    $project: { 
+      name: 1, 
+      age: 1, 
+      diseases: "$disease_data.name" 
+    } 
+  }
+])
+3)db.Doctor.aggregate([
+  { 
+    $match: { 
+      specialty: "Терапевт" 
+    } 
+  },
+  { 
+    $bucket: {
+      groupBy: "$experience",
+      boundaries: [0, 5, 10, 15, 20],
+      default: "Other",
+      output: { 
+        count: { $sum: 1 } 
+      }
+    } 
+  }
+])
+4)db.Naznachenie.aggregate([
+  { 
+    $lookup: { 
+      from: "Pazhient", 
+      localField: "person", 
+      foreignField: "_id", 
+      as: "patient" 
+    } 
+  },
+  { $unwind: "$patient" },
+  { 
+    $lookup: { 
+      from: "Doctor", 
+      localField: "patient.Doctor", 
+      foreignField: "_id", 
+      as: "doctor" 
+    } 
+  },
+  { $unwind: "$doctor" },
+  { 
+    $group: { 
+      _id: "$doctor.specialty", 
+      total_prescriptions: { $sum: 1 } 
+    } 
+  },
+  { $match: { _id: { $in: ["Терапевт", "Кардиолог"] } } }
+])
